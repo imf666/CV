@@ -1,0 +1,27 @@
+stages:
+  - prepare
+  - build
+  - deploy
+
+clone_repository:
+  stage: prepare
+  script:
+    - 'REPO_DIR="./n-b2b_frontend_next"'
+    - 'rm -rf $REPO_DIR'
+    - 'git clone -b maksim git@gitlab.com:Novacable/n-b2b_frontend_next.git -b maksim $REPO_DIR'
+    - 'cd $REPO_DIR'
+    # Эта команда нужна только если Dockerfile находится вне репозитория
+    - 'cp /opt/nextbuild/Dockerfile /opt/nextbuild/n-b2b_frontend_next/Dockerfile'
+  tags:
+    - frontend-next
+
+build_container:
+  stage: build
+  script:
+    - 'cd $REPO_DIR'
+    - 'docker build -t nextjs-app -f /opt/nextbuild/n-b2b_frontend_next/Dockerfile /opt/nextbuild/n-b2b_frontend_next'
+    - 'docker stop nextjs-app || true'
+    - 'docker rm nextjs-app || true'
+    - 'docker run -dit -p 3000:3000 --restart always --name nextjs-app nextjs-app'
+  tags:
+    - frontend-next
