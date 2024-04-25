@@ -1,0 +1,21 @@
+stages:
+    - build
+    
+stage_build:
+    stage: build
+    image: ubuntu:20.04
+    script:
+         - hostname
+         - sudo rm -rf /var/www/n-b2b-production
+         - sudo mkdir /var/www/n-b2b-production
+         - sudo git clone -b prod git@gitlab.com:Novacable/n-b2b-v3.git /var/www/n-b2b-production
+         - sudo docker buildx build --tag n-b2b-production --build-arg docker-env.txt /var/www/n-b2b-production/
+         - sudo docker stop n-b2b-production || echo 'No running containers'
+         - sudo docker container prune -f
+         - sudo docker run -e "APPLICATION_NAME=$APPLICATION_NAME" -e "DEBUG=$DEBUG" -e "SECRET_KEY=$SECRET_KEY" -e "ALLOWED_HOSTS=$ALLOWED_HOSTS" -e "CORS_ORIGINS=$CORS_ORIGINS" -e "STATIC_DIR=$STATIC_DIR" -e "MEDIA_DIR=$MEDIA_DIR" -e "NOTIFICATION_EMAIL=$NOTIFICATION_EMAIL" -e "MAIL_HOST=$MAIL_HOST" -e "MAIL_PORT=$MAIL_PORT" -e "MAIL_USER=$MAIL_USER" -e "MAIL_PASSWORD=$MAIL_PASSWORD" -e "MAIL_USE_SSL=$MAIL_USE_SSL" -e "DATABASE_ENGINE=$DATABASE_ENGINE" -e "DATABASE_HOST=$DATABASE_HOST" -e "DATABASE_PORT=$DATABASE_PORT" -e "DATABASE_NAME=$DATABASE_NAME" -e "DATABASE_SCHEMA_NAME=$DATABASE_SCHEMA_NAME" -e "DATABASE_USER=$DATABASE_USER" -e "DATABASE_PASSWORD=$DATABASE_PASSWORD" -e "ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST" -e "ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT" -e "ELASTICSEARCH_PROTOCOL=$ELASTICSEARCH_PROTOCOL" -e "ELASTICSEARCH_USERNAME=$ELASTICSEARCH_USERNAME" -e "ELASTICSEARCH_PASSWORD=$ELASTICSEARCH_PASSWORD" -e "RUSSVET_LOGIN=$RUSSVET_LOGIN" -e "RUSSVET_PASSWORD=$RUSSVET_PASSWORD" -d --restart always --name n-b2b-production -p 8001:8000 -v /mnt/s3/media:/home/app/media -v /mnt/s3/static:/home/app/static n-b2b-production
+    only:
+         - prod
+    tags:
+         - prod
+    environment: 
+       name: production
